@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+	// Trust Proxy untuk Nginx Proxy Manager (HTTPS)
+        $middleware->trustProxies(at: '*');
+
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
+        ]);
+
+        // Alias untuk role-based access control
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckRole::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
+        ]);
+
+        // Redirect tamu/guest ke halaman login jika belum terautentikasi
+        $middleware->redirectGuestsTo('/login');
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        //
+    })->create();

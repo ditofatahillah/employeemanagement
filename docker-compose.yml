@@ -1,0 +1,59 @@
+# ==============================================================================
+# MAISSTACK APPS - APP1 STACK (LARAVEL + NGINX)
+# ------------------------------------------------------------------------------
+# Maintainer: Waysolve Team
+# ==============================================================================
+
+services:
+  # PHP-FPM Application Runtime
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: apps-esurat
+    restart: unless-stopped
+
+    working_dir: /var/www/html
+
+    environment:
+      UMASK: "0002"
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./:/var/www/html
+
+    networks:
+      - proxy-network
+      - backend-network
+
+  # Nginx Web Server (Frontend proxy to PHP-FPM)
+  nginx:
+    image: nginx:alpine
+
+    container_name: app1-nginx
+    restart: unless-stopped
+
+    volumes:
+      - ./:/var/www/html:ro
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+
+    depends_on:
+      - php
+
+    networks:
+      - proxy-network
+
+# ------------------------------------------------------------------------------
+# NETWORKS
+# ------------------------------------------------------------------------------
+# Connect app to core proxy network and core database backend network
+# ------------------------------------------------------------------------------
+networks:
+  proxy-network:
+    external: true
+
+  backend-network:
+    external: true
